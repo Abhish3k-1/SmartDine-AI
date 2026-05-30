@@ -1,0 +1,135 @@
+/* ============================================================
+   SmartDine AI — Premium Animations & Keyframes
+   Step 4 Overhaul
+   ============================================================ */
+
+/* ── Keyframes ────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cartBump {
+  0%   { transform: scale(1) rotate(0deg); }
+  35%  { transform: scale(1.35) rotate(-15deg); }
+  65%  { transform: scale(0.9) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.6); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+@keyframes fieldAttention {
+  0%, 100% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  20%, 60% { transform: translateX(-4px); box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+  40%, 80% { transform: translateX(4px); box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ── Entrance Animation Utilities ─────────────────────────── */
+
+.animate-fade-up   { animation: fadeInUp 400ms var(--ease-out) both; }
+.animate-fade-in   { animation: fadeInScale 300ms var(--ease-out) both; }
+.animate-slide-in  { animation: slideInRight 350ms var(--ease-out) both; }
+.animate-float     { animation: float 4s ease-in-out infinite; }
+
+/* Staggered Grid Entrance */
+.stagger > *:nth-child(1)  { animation: fadeInUp 400ms var(--ease-out) 0ms   both; }
+.stagger > *:nth-child(2)  { animation: fadeInUp 400ms var(--ease-out) 60ms  both; }
+.stagger > *:nth-child(3)  { animation: fadeInUp 400ms var(--ease-out) 120ms both; }
+.stagger > *:nth-child(4)  { animation: fadeInUp 400ms var(--ease-out) 180ms both; }
+.stagger > *:nth-child(5)  { animation: fadeInUp 400ms var(--ease-out) 240ms both; }
+.stagger > *:nth-child(6)  { animation: fadeInUp 400ms var(--ease-out) 300ms both; }
+.stagger > *:nth-child(7)  { animation: fadeInUp 400ms var(--ease-out) 360ms both; }
+.stagger > *:nth-child(8)  { animation: fadeInUp 400ms var(--ease-out) 420ms both; }
+
+/* Keep Turn 2 stagger class as well for backward compatibility */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeInUp var(--t-slow) var(--ease-out) both;
+}
+.stagger-children > *:nth-child(1)  { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2)  { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3)  { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4)  { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5)  { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6)  { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7)  { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8)  { animation-delay: 420ms; }
+.stagger-children > *:nth-child(9)  { animation-delay: 480ms; }
+.stagger-children > *:nth-child(10) { animation-delay: 540ms; }
+.stagger-children > *:nth-child(11) { animation-delay: 600ms; }
+.stagger-children > *:nth-child(12) { animation-delay: 660ms; }
+
+/* ── Skeleton Loader ──────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-overlay)  50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: var(--radius-md);
+  color: transparent !important;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Micro-interaction Triggers */
+.cart-bump {
+  animation: cartBump var(--t-slow) var(--ease-spring) forwards;
+}
+
+.field-attention {
+  animation: fieldAttention var(--t-slow) var(--ease-out) forwards;
+}
+
+/* ── Reduced Motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .skeleton {
+    animation: none !important;
+    background: var(--bg-overlay) !important;
+  }
+
+  .cart-bump,
+  .field-attention,
+  .stagger > *,
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

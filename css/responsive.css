@@ -1,0 +1,518 @@
+/* ============================================================
+   SmartDine AI — Premium Responsive Framework & Print Layouts
+   Step 5 Overhaul • Floating Top Capsule Navbar Redesign
+   ============================================================ */
+
+/* ==========================================================
+   📱 1. Mobile Breakpoint (< 768px)
+   ========================================================== */
+@media (max-width: 767px) {
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.375rem; }
+  
+  /* Grids */
+  .menu-grid, .card-grid { 
+    grid-template-columns: 1fr !important; 
+    gap: var(--space-4);
+  }
+  
+  .stat-grid { 
+    grid-template-columns: 1fr 1fr; 
+    gap: var(--space-2);
+  }
+  
+  .kanban-board, .kitchen-board { 
+    flex-direction: column; 
+    gap: var(--space-4);
+  }
+  
+  .sidebar, aside { 
+    display: none !important; 
+  }
+  
+  button, .btn { 
+    min-height: 48px; /* Touch target minimum */
+  }
+  
+  .toast-container { 
+    right: 50%; 
+    transform: translateX(50%); 
+    bottom: 80px; 
+    left: auto;
+    width: calc(100vw - 32px);
+  }
+  
+  .toast { 
+    min-width: 90vw; 
+    animation: slideInUp var(--t-base) var(--ease-out) both;
+  }
+
+  /* ── Mobile Layout Shell ────────────────────────────────── */
+  body {
+    padding-bottom: 80px; /* Space above tab bar */
+  }
+
+  .page-section {
+    padding-top: calc(var(--navbar-height) + var(--space-4));
+    padding-bottom: var(--space-8);
+  }
+
+  /* Header fixed at top */
+  .navbar {
+    height: 60px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .navbar-container {
+    padding: 0 var(--space-4);
+  }
+  .navbar .nav-links {
+    display: none !important; /* Hide header desktop navigation links */
+  }
+  .nav-actions {
+    gap: var(--space-2);
+  }
+  .table-indicator, .user-greeting {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Top Sliding Mobile Navigation Menu */
+  .mobile-nav {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--nav-bg) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-bottom: 1.5px solid var(--border-amber) !important;
+    padding: var(--space-4) !important;
+    gap: var(--space-2) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 999 !important;
+    transform: translateY(-120%);
+    transition: transform var(--t-base) var(--ease-out);
+  }
+  .mobile-nav.active {
+    transform: translateY(0) !important;
+  }
+
+  .mobile-nav .nav-link {
+    display: flex !important;
+    align-items: center;
+    gap: var(--space-3) !important;
+    padding: 12px 16px !important;
+    color: var(--text-secondary) !important;
+    font-size: var(--text-base) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    border-radius: var(--radius-md) !important;
+    transition: all var(--t-fast) !important;
+    border: 1.5px solid transparent !important;
+    background: transparent !important;
+  }
+  .mobile-nav .nav-link:hover {
+    background: var(--bg-overlay) !important;
+    color: var(--text-primary) !important;
+  }
+  .mobile-nav .nav-link.active {
+    background: var(--warning-soft) !important;
+    color: var(--amber-base) !important;
+    border-color: var(--border-amber) !important;
+  }
+
+  /* Add icons before mobile menu links using standard route indicators */
+  .mobile-nav .nav-link[data-route="/"]::before { content: '🏠'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/menu"]::before { content: '🍽️'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/cart"]::before { content: '🛒'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/track-order"]::before { content: '📋'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/settings"]::before { content: '⚙️'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/admin"]::before { content: '📊'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/inventory"]::before { content: '📦'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/analytics"]::before { content: '📈'; font-size: 1.1rem; }
+  .mobile-nav .nav-link[data-route="/kitchen"]::before { content: '👨‍🍳'; font-size: 1.1rem; }
+
+
+  /* Horizontal scrolling filter tags on mobile */
+  .filter-tags {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 8px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-tags::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-tag {
+    flex: 0 0 auto;
+  }
+
+  /* Swipe-snap columns for kitchen board to mimic native swipable tabs */
+  .kitchen-board {
+    grid-template-columns: none !important;
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    width: 100vw;
+    margin-left: calc(-1 * var(--space-6));
+    padding: 0 var(--space-6) var(--space-4) var(--space-6);
+    gap: var(--space-4);
+    scrollbar-width: none;
+  }
+  .kitchen-board::-webkit-scrollbar {
+    display: none;
+  }
+  .kitchen-col {
+    flex: 0 0 calc(100vw - 48px);
+    scroll-snap-align: center;
+    max-height: calc(100vh - 280px) !important;
+  }
+
+  /* Cart Layout Stack */
+  .cart-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  .cart-summary {
+    position: static;
+  }
+  .cart-item {
+    padding: var(--space-3);
+    gap: var(--space-3);
+  }
+  .cart-item-img {
+    width: 72px;
+    height: 72px;
+  }
+
+  /* Bottom sheet modal styling on mobile */
+  .modal {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    transform: translateY(100%) !important;
+    margin: 0 !important;
+    border-bottom: none !important;
+  }
+  .modal.active {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
+  .modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: var(--radius-pill);
+    margin: var(--space-2) auto 0 auto;
+  }
+  .modal-body {
+    max-height: calc(90vh - 130px) !important;
+    padding: var(--space-4) var(--space-5);
+  }
+  .modal-footer {
+    border-radius: 0;
+  }
+
+  .heatmap-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: var(--space-2);
+  }
+}
+
+/* ==========================================================
+   📟 2. Tablet Breakpoint (768px – 1023px)
+   ========================================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .menu-grid, .card-grid { 
+    grid-template-columns: repeat(2, 1fr) !important; 
+    gap: var(--space-4);
+  }
+  
+  .stat-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  
+  .kanban-board, .kitchen-board { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: var(--space-4);
+  }
+
+  .cart-layout {
+    grid-template-columns: 1fr;
+  }
+  .cart-summary {
+    position: static;
+  }
+
+  .heatmap-grid {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+}
+
+/* ==========================================================
+   💻 3. Desktop Breakpoint (>= 1024px)
+   ========================================================== */
+@media (min-width: 1024px) {
+  /* Enforce premium horizontal floating capsule top navbar */
+  /* Enforce premium full-width top sticky glassmorphic navbar */
+  .navbar {
+    position: fixed;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 72px !important;
+    background: var(--nav-bg) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    box-shadow: var(--shadow-md) !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    flex-direction: row !important;
+  }
+
+  .navbar-container {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100% !important;
+    padding: 0 var(--space-6) !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: var(--space-4) !important;
+    width: 100% !important;
+    max-width: var(--container-max) !important;
+    margin: 0 auto !important;
+    border-bottom: none !important;
+  }
+
+  .navbar-logo {
+    font-size: var(--text-md) !important;
+    margin-bottom: 0 !important;
+  }
+
+  .navbar .nav-links {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: var(--space-2) !important;
+    width: auto !important;
+  }
+
+  .navbar .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    padding: var(--space-2) var(--space-4) !important;
+    font-size: var(--text-sm) !important;
+    font-weight: 500 !important;
+    color: var(--text-secondary) !important;
+    border-radius: var(--radius-pill) !important;
+    width: auto !important;
+    border: 1px solid transparent !important;
+  }
+
+  .navbar .nav-link:hover {
+    background: var(--bg-overlay) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .navbar .nav-link.active {
+    background: var(--warning-soft) !important;
+    color: var(--amber-base) !important;
+    border-color: var(--border-amber) !important;
+  }
+
+  /* Remove desktop vertical sidebar navigation icons */
+  .navbar .nav-link::before {
+    display: none !important;
+  }
+
+  /* Header actions side by side */
+  .navbar .nav-actions {
+    margin-top: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: var(--space-3) !important;
+    width: auto !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+  }
+
+  .navbar .theme-toggle-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: var(--radius-pill) !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-default) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+  }
+  .navbar .theme-toggle-btn::after {
+    display: none !important;
+  }
+
+  .navbar .cart-link {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: var(--radius-pill) !important;
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-default) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+  }
+  .navbar .cart-link::after {
+    display: none !important;
+  }
+  .navbar .cart-badge {
+    position: absolute !important;
+    top: -4px !important;
+    right: -4px !important;
+    border: 1.5px solid var(--bg-void) !important;
+    margin-left: 0 !important;
+  }
+
+  .navbar .user-greeting {
+    text-align: left;
+    background: transparent;
+    padding: 0;
+    font-family: var(--font-body);
+  }
+
+  .navbar .btn-sm {
+    width: auto !important;
+    min-height: auto !important;
+  }
+
+  /* Reset main viewport margins as the navbar is now fixed at the top */
+  main#app {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-top: 96px !important; /* Space beneath the sticky navbar */
+  }
+
+  /* Desktop Grids */
+  .menu-grid, .card-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: var(--space-6);
+  }
+
+  .kitchen-board {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: var(--space-4);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: var(--space-4);
+  }
+
+  .analytics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-6);
+  }
+
+  .heatmap-grid {
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: var(--space-3);
+  }
+}
+
+/* ==========================================================
+   🖥️ 4. Large Monitors (>= 1536px)
+   ========================================================== */
+@media (min-width: 1536px) {
+  .menu-grid, .card-grid { 
+    grid-template-columns: repeat(4, 1fr) !important; 
+  }
+  
+  .app-container, .container { 
+    max-width: var(--container-max); 
+    margin: 0 auto; 
+  }
+}
+
+/* ==========================================================
+   🖨️ 5. Clean Print Styles Overrides
+   ========================================================== */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Hide sidebar and navigation chrome */
+  nav, .navbar, .mobile-nav, .theme-toggle-btn, .ai-float-btn, .ai-chat-panel,
+  .toast-container, .modal-backdrop, .modal, .btn, button, footer,
+  .page-header, .page-subtitle, .menu-controls, .filter-tags {
+    display: none !important;
+  }
+
+  main#app {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-top: 0 !important;
+  }
+
+  .qr-tent-preview {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    margin: 40px auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .qr-tent-preview div, .qr-tent-preview svg {
+    filter: none !important;
+  }
+
+  svg rect {
+    fill: black !important;
+  }
+  svg rect[fill="#fff"] {
+    fill: white !important;
+  }
+  svg text {
+    fill: #000 !important;
+  }
+}

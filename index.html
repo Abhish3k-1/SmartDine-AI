@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="SmartDine AI — Intelligent QR-Based Restaurant Ordering & Kitchen Management System. Scan, order, and track your meals with AI-powered recommendations.">
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SmartDine AI">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#f59e0b">
+
+    <title>SmartDine AI — Smart Restaurant Ordering</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Favicon / Icons -->
+    <link rel="icon" type="image/png" href="assets/images/hero_restaurant.png">
+    <link rel="apple-touch-icon" href="assets/images/hero_restaurant.png">
+
+    <!-- Premium Google Fonts: Playfair Display, DM Sans, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets (order matters) -->
+    <link rel="stylesheet" href="css/themes.css?v=6">
+    <link rel="stylesheet" href="css/animations.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/responsive.css?v=5">
+
+    <!-- Supabase client for Google OAuth login -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- Global Navbar (rendered by JS) -->
+    <nav id="navbar-root"></nav>
+
+    <!-- Main Application Viewport — all pages render here -->
+    <main id="app">
+        <!-- Loading skeleton shown before JS initializes -->
+        <div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+            <div style="text-align:center;">
+                <div style="font-size:2.5rem;margin-bottom:16px;animation:pulse 1.5s infinite;"></div>
+                <div style="font-size:1.1rem;font-weight:600;color:var(--text-primary,#f5f5f5);">Loading SmartDine AI...</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary,#a3a3a3);margin-top:8px;">Preparing your experience</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!--
+        ARCHITECTURE NOTE:
+        This is a modular vanilla JS SPA. Scripts are loaded in dependency order.
+        Each file contributes global functions/objects that subsequent files depend on.
+
+        Load Order:
+        1. utils.js    — Helpers, formatters, toast/modal systems
+        2. storage.js  — localStorage wrapper
+        3. data.js     — Sample data (40+ menu items, inventory, waiters)
+        4. auth.js     — Authentication, login/logout, role checking
+        5. router.js   — Hash routing, route guards, navbar rendering
+        6. customer.js — Landing page, menu, food detail modal, settings
+        7. cart.js     — Cart CRUD, order placement
+        8. kitchen.js  — Kitchen Kanban dashboard
+        9. admin.js    — Admin dashboard, QR generator
+        10. inventory.js — Inventory CRUD
+        11. analytics.js — CSS charts, AI insights
+        12. ai.js       — AI chat assistant
+        13. pwa.js      — Service worker registration
+        14. app.js      — App initialization, event delegation (MUST BE LAST)
+    -->
+    <script src="js/utils.js?v=8"></script>
+    <script src="js/storage.js?v=7"></script>
+    <script src="js/config.js?v=7"></script>
+    <script src="js/api.js?v=11"></script>
+    <script src="js/data.js?v=7"></script>
+    <script src="js/auth.js?v=15"></script>
+    <script src="js/router.js?v=10"></script>
+    <script src="js/customer.js?v=15"></script>
+    <script src="js/cart.js?v=13"></script>
+    <script src="js/kitchen.js?v=7"></script>
+    <script src="js/admin.js?v=7"></script>
+    <script src="js/inventory.js?v=7"></script>
+    <script src="js/analytics.js?v=7"></script>
+    <script src="js/ai.js?v=9"></script>
+    <script src="js/pwa.js?v=8"></script>
+    <script src="js/app.js?v=13"></script>
+</body>
+</html>
