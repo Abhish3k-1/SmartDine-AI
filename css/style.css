@@ -4616,8 +4616,9 @@ body {
 .menu-page .menu-card-image {
   overflow: hidden;
   border-radius: 26px !important;
-  background: var(--surface-2);
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border: 0 !important;
+  box-shadow: none !important;
   transition:
     transform var(--t-base) var(--ease-out),
     box-shadow var(--t-base) var(--ease-out);
@@ -4625,7 +4626,11 @@ body {
 
 .menu-page .menu-card:hover .menu-card-image {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: none !important;
+}
+
+.menu-page .menu-card-image::after {
+  display: none !important;
 }
 
 .menu-page .menu-card-body {
@@ -4658,27 +4663,29 @@ body {
 }
 
 .food-type-badge {
-  width: 24px;
-  height: 24px;
+  width: auto;
+  height: auto;
   border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.90);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .food-type-dot {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.88);
 }
 
 .menu-page .menu-card-tags {
-  gap: 6px;
+  display: none;
 }
 
 .menu-page .menu-tag {
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 html[data-theme='light'] .menu-search-box input,
@@ -4750,7 +4757,7 @@ body[data-theme='light'] .menu-search-box input {
   .menu-page .menu-card-image {
     height: 122px;
     border-radius: 18px !important;
-    box-shadow: none;
+    box-shadow: none !important;
   }
 
   .menu-page .menu-card:hover .menu-card-image {
