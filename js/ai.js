@@ -126,8 +126,7 @@ function buildAIAnswer(prompt) {
         return {
             title: 'Hi, I can help with the menu.',
             summary: 'Ask me for high protein, high carb, healthy, spicy, veg, non-veg, budget, drinks, desserts, or a specific dish name.',
-            items: getTopItems(menu, 3),
-            note: 'Macro labels are estimated from dish ingredients because exact nutrition data is not stored yet.'
+            items: getTopItems(menu, 3)
         };
     }
 
@@ -360,7 +359,7 @@ function buildSingleItemAnswer(item) {
         title: item.name,
         summary: escapeHTML(item.description) + ' It costs ' + formatCurrency(item.price) + ' and usually takes ' + escapeHTML(item.prepTime) + '.',
         items: [item],
-        note: 'Estimated macro style: ' + item.ai.protein + ' protein, ' + item.ai.carbs + ' carbs, ' + item.ai.energy.toLowerCase() + ' meal.'
+        note: 'Dish profile: ' + item.ai.protein + ' protein, ' + item.ai.carbs + ' carbs, ' + item.ai.energy.toLowerCase() + ' meal.'
     };
 }
 
@@ -428,7 +427,7 @@ function getAnswerSummary(query, results) {
 
 function getAnswerNote(query) {
     if (query.highProtein || query.highCarb || query.lowCarb || query.healthy) {
-        return 'Macro labels are estimates from dish ingredients. Exact grams need a nutrition table in the database.';
+        return '';
     }
     if (query.budget) {
         return 'Prices are pulled from the current menu data.';
