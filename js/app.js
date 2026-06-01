@@ -10,6 +10,8 @@ async function init() {
   // 1. Initialize sample data in localStorage
   initializeData();
 
+  await syncWaitersFromDB();
+
   // 1.5. Prune expired order/user data while keeping profile identity.
   if (window.SmartDineAPI && typeof SmartDineAPI.cleanupExpiredUserData === 'function') {
     SmartDineAPI.cleanupExpiredUserData().catch(function(err) {
@@ -46,6 +48,39 @@ async function init() {
   registerServiceWorker();
 
   console.log('[SmartDine AI] v' + APP_VERSION + ' initialized successfully');
+}
+
+function normalizeWaiterRoster(waiters) {
+  return (waiters || []).map(function(waiter) {
+    var avatar = waiter.avatar || '';
+    if (avatar && avatar.indexOf('<') !== 0) {
+      avatar = '<img src="' + escapeHTML(avatar) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+    }
+
+    return {
+      id: waiter.id,
+      name: waiter.name,
+      avatar: avatar,
+      rating: waiter.rating,
+      status: waiter.status,
+      tables: waiter.tables || [],
+      description: waiter.description || ''
+    };
+  });
+}
+
+function syncWaitersFromDB() {
+  if (!window.SmartDineAPI || typeof SmartDineAPI.getWaiters !== 'function') {
+    return Promise.resolve();
+  }
+
+  return SmartDineAPI.getWaiters().then(function(res) {
+    if (!res.error && res.data && res.data.length > 0) {
+      Storage.set('smartdine_waiters', normalizeWaiterRoster(res.data));
+    }
+  }).catch(function(err) {
+    console.warn('[SmartDine AI] Waiter roster sync skipped:', err);
+  });
 }
 
 // ============================================================
@@ -119,6 +154,18 @@ document.addEventListener('click', function (e) {
       // Order Status Updates (Kitchen)
       case 'update-order-status':
         updateOrderStatus(id, target.dataset.status);
+        break;
+
+      case 'cancel-order':
+        cancelOrder(id);
+        break;
+
+      case 'delete-kitchen-history':
+        deleteKitchenOrderHistory(id);
+        break;
+
+      case 'confirm-delete-kitchen-history':
+        confirmDeleteKitchenOrderHistory(id);
         break;
 
       // Theme Toggle
@@ -196,8 +243,8 @@ document.addEventListener('click', function (e) {
         break;
     }
   } catch (err) {
-    alert("SmartDine AI Click Handler Error:\n\nMessage: " + err.message + "\n\nStack:\n" + err.stack);
     console.error("Click handler crash:", err);
+    showToast('Action Failed', err && err.message ? err.message : 'Something went wrong. Please try again.', 'error');
   }
 });
 

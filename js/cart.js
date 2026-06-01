@@ -159,9 +159,12 @@ function buildTableOptions(selectedTable) {
 
 function syncCartToDB() {
     var user = Auth.getUser();
-    if (!user || !user.email || !window.SmartDineAPI) return;
-    SmartDineAPI.saveCart(user.email, Storage.get('smartdine_cart', [])).catch(function(err) {
+    if (!user || !user.email || !window.SmartDineAPI) {
+        return Promise.resolve({ data: null, error: null });
+    }
+    return SmartDineAPI.saveCart(user.email, Storage.get('smartdine_cart', [])).catch(function(err) {
         console.warn('[Cart] Cloud cart sync skipped:', err);
+        return { data: null, error: err && err.message ? err.message : 'Cart sync failed' };
     });
 }
 
@@ -327,7 +330,7 @@ async function placeOrder() {
     }
 
     Storage.set('smartdine_cart', []);
-    syncCartToDB();
+    await syncCartToDB();
     updateCartBadge();
     showToast('Order Placed!', 'Your order has been sent to the kitchen.', 'success');
     navigateTo('/track-order');

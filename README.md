@@ -21,7 +21,7 @@ Intelligent QR-Based Restaurant Ordering & Kitchen Management System.
 - HTML5
 - CSS3 (Vanilla, custom properties, animations, glassmorphism)
 - JavaScript (Vanilla, ES5/ES6 compatible, modular structure without bundlers)
-- Supabase-backed API client with localStorage fallback/cache
+- Supabase-backed API client with local emulator mode and local user/session cache
 - PWA (Progressive Web App) Support
 
 ## File Structure

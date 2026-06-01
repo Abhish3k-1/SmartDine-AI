@@ -151,6 +151,7 @@ function showToast(title, message, type) {
     warning: '⚠️'
   };
   var icon = icons[type] || icons.info;
+  icon = ({ success: 'OK', error: '!', info: 'i', warning: '!' })[type] || 'i';
 
   // Build toast element
   var toast = document.createElement('div');

@@ -204,12 +204,20 @@ async function renderMenu() {
       var app = document.getElementById('app');
       if (app) app.innerHTML = '<section class="page-section"><div style="text-align:center; padding:100px;"><h3>Loading Menu...</h3></div></section>';
       var res = await SmartDineAPI.getMenu();
-      if (!res.error && res.data && res.data.length > 0) {
-        window.APP_MENU = normalizeMenuItems(res.data);
-      } else {
-        window.APP_MENU = normalizeMenuItems(Storage.get('smartdine_menu', []));
-        if (res.error) showToast('Menu Fallback', 'Supabase menu failed, showing the local 40-item menu.', 'warning');
+      if (res.error) {
+        if (app) {
+          app.innerHTML =
+            '<section class="page-section">' +
+              '<div class="empty-state">' +
+                '<h2>Menu Sync Failed</h2>' +
+                '<p>' + escapeHTML(res.error) + '</p>' +
+                '<button class="btn btn-primary" data-action="navigate" data-route="/menu">Retry</button>' +
+              '</div>' +
+            '</section>';
+        }
+        return;
       }
+      window.APP_MENU = normalizeMenuItems(res.data || []);
   }
   
   var menu = window.APP_MENU;
@@ -731,11 +739,82 @@ function getActiveTrackOrders(orders, user) {
   return orders.filter(function(order) {
     if (!orderBelongsToUser(order, user)) return false;
     if (String(order.status || '').toLowerCase() === 'served') return false;
+    if (String(order.status || '').toLowerCase() === 'cancelled') return false;
     if (isOrderExpiredForTrack(order)) return false;
     return true;
   }).sort(function(a, b) {
     return getOrderCreatedTime(a) - getOrderCreatedTime(b);
   });
+}
+
+var ORDER_CANCEL_WINDOW_MS = 3 * 60 * 1000;
+
+function getOrderCancelRemainingMs(order) {
+  var created = getOrderCreatedTime(order);
+  if (!created) return 0;
+  return Math.max(0, ORDER_CANCEL_WINDOW_MS - (Date.now() - created));
+}
+
+function canCancelOrder(order) {
+  if (!order) return false;
+  var status = String(order.status || '').toLowerCase();
+  if (status === 'served' || status === 'cancelled') return false;
+  return getOrderCancelRemainingMs(order) > 0;
+}
+
+function renderCancelOrderAction(order) {
+  var remaining = getOrderCancelRemainingMs(order);
+  if (canCancelOrder(order)) {
+    var remainingMin = Math.max(1, Math.ceil(remaining / 60000));
+    return '<div class="track-actions">' +
+      '<button class="btn btn-danger btn-sm track-cancel-btn" data-action="cancel-order" data-id="' + order.id + '">Cancel Order</button>' +
+      '<span>Cancellation available for about ' + remainingMin + ' min.</span>' +
+    '</div>';
+  }
+  return '<div class="track-actions track-actions-muted"><span>Cancellation window has ended.</span></div>';
+}
+
+async function cancelOrder(orderId) {
+  var user = Auth.getUser();
+  if (!user || !user.email) {
+    showToast('Login Required', 'Sign in to manage your order.', 'warning');
+    return;
+  }
+
+  var res = await SmartDineAPI.getOrders();
+  if (res.error) {
+    showToast('Error', 'Could not check this order right now.', 'error');
+    return;
+  }
+
+  var orders = res.data || [];
+  var order = null;
+  for (var i = 0; i < orders.length; i++) {
+    if (String(orders[i].id) === String(orderId)) {
+      order = orders[i];
+      break;
+    }
+  }
+
+  if (!order || !orderBelongsToUser(order, user)) {
+    showToast('Order Not Found', 'This order is no longer available.', 'warning');
+    return;
+  }
+
+  if (!canCancelOrder(order)) {
+    showToast('Cancellation Closed', 'Orders can only be cancelled within 3 minutes.', 'warning');
+    renderTrackOrder();
+    return;
+  }
+
+  var cancelRes = await SmartDineAPI.updateOrderStatus(orderId, 'cancelled');
+  if (cancelRes.error) {
+    showToast('Cancel Failed', 'Could not cancel this order. Please contact staff.', 'error');
+    return;
+  }
+
+  showToast('Order Cancelled', 'Your order was cancelled successfully.', 'success');
+  renderTrackOrder();
 }
 
 async function renderTrackOrder() {
@@ -790,7 +869,7 @@ async function renderTrackOrder() {
   var assignedWaiter = getOrderWaiter(order);
   var statuses = ['placed', 'preparing', 'ready', 'served'];
   var statusIcons = { placed: '', preparing: '', ready: '', served: '' };
-  var statusLabels = { placed: 'Placed', preparing: 'Preparing', ready: 'Ready', served: 'Served' };
+  var statusLabels = { placed: 'Placed', preparing: 'Preparing', ready: 'Ready', served: 'Served', cancelled: 'Cancelled' };
   var currentIdx = statuses.indexOf(order.status);
 
   var itemsList = '';
@@ -798,6 +877,10 @@ async function renderTrackOrder() {
   for (var i = 0; i < itemsArray.length; i++) {
     var it = itemsArray[i];
     var extras = '';
+    var qty = it.quantity || it.qty || 1;
+    var itemTotal = typeof it.item_total !== 'undefined' && it.item_total !== null ?
+      Number(it.item_total) :
+      (typeof it.itemTotal !== 'undefined' && it.itemTotal !== null ? Number(it.itemTotal) : Number(it.price || 0) * qty);
     if (it.portion && it.portion !== 'Regular') extras += ' <span class="meta-tag" style="font-size:0.7rem;">' + it.portion + '</span>';
     var addonArr = it.addons || it.addOns || [];
     if (addonArr && addonArr.length > 0) {
@@ -808,7 +891,7 @@ async function renderTrackOrder() {
     itemsList +=
       '<div class="track-item">' +
         '<span>' + escapeHTML(it.menu_item_name || it.name) + ' × ' + (it.quantity || it.qty || 1) + extras + '</span>' +
-        '<span>' + formatCurrency((it.item_total || it.price || it.itemTotal || 0) * (it.quantity || it.qty || 1)) + '</span>' +
+        '<span>' + formatCurrency(itemTotal) + '</span>' +
       '</div>';
   }
 
@@ -869,6 +952,7 @@ async function renderTrackOrder() {
           itemsList +
         '</div>' +
         '<div class="track-timeline">' + timelineHTML + '</div>' +
+        renderCancelOrderAction(order) +
         waiterHTML +
       '</div>' +
     '</section>';

@@ -16,6 +16,33 @@ function getOrderCreatedTime(order) {
     return isNaN(time) ? 0 : time;
 }
 
+function readInventoryNumber(item, snakeKey, camelKey) {
+    if (!item) return 0;
+    var value = typeof item[snakeKey] !== 'undefined' ? item[snakeKey] : item[camelKey];
+    var parsed = parseInt(value, 10);
+    return isNaN(parsed) ? 0 : parsed;
+}
+
+function getOrderItemMenuId(item) {
+    var id = parseInt(item && (item.menu_item_id || item.id), 10);
+    return isNaN(id) ? null : id;
+}
+
+function getOrderItemQuantity(item) {
+    var quantity = parseInt(item && (item.quantity || item.qty), 10);
+    return isNaN(quantity) || quantity < 1 ? 1 : quantity;
+}
+
+function getInventoryPayload(item) {
+    item = item || {};
+    return {
+        name: item.name || item.item_name || 'Inventory item',
+        category: item.category || 'Uncategorized',
+        availableStock: readInventoryNumber(item, 'available_stock', 'availableStock'),
+        usedStock: readInventoryNumber(item, 'used_stock', 'usedStock')
+    };
+}
+
 class LocalDBEmulator {
     static cleanupLastRun = 0;
 
@@ -43,6 +70,53 @@ class LocalDBEmulator {
     static async getInventory() {
         await this.delay();
         return { data: Storage.get('smartdine_inventory', []), error: null };
+    }
+
+    static async getWaiters() {
+        await this.delay();
+        return { data: Storage.get('smartdine_waiters', []), error: null };
+    }
+
+    static async createInventoryItem(item) {
+        await this.delay(250);
+        var inventory = Storage.get('smartdine_inventory', []);
+        var maxId = inventory.reduce(function(max, row) {
+            var id = parseInt(row.id, 10);
+            return isNaN(id) ? max : Math.max(max, id);
+        }, 0);
+        var payload = getInventoryPayload(item);
+        payload.id = maxId + 1;
+        inventory.push(payload);
+        Storage.set('smartdine_inventory', inventory);
+        return { data: [payload], error: null };
+    }
+
+    static async updateInventoryItem(itemId, item) {
+        await this.delay(250);
+        var inventory = Storage.get('smartdine_inventory', []);
+        var idx = inventory.findIndex(function(row) {
+            return String(row.id) === String(itemId);
+        });
+        if (idx < 0) return { data: null, error: 'Inventory item not found' };
+
+        var payload = getInventoryPayload(item);
+        payload.id = inventory[idx].id;
+        inventory[idx] = payload;
+        Storage.set('smartdine_inventory', inventory);
+        return { data: [payload], error: null };
+    }
+
+    static async deleteInventoryItem(itemId) {
+        await this.delay(250);
+        var inventory = Storage.get('smartdine_inventory', []);
+        var nextInventory = inventory.filter(function(row) {
+            return String(row.id) !== String(itemId);
+        });
+        if (nextInventory.length === inventory.length) {
+            return { data: null, error: 'Inventory item not found' };
+        }
+        Storage.set('smartdine_inventory', nextInventory);
+        return { data: { success: true }, error: null };
     }
 
     static async getOrders() {
@@ -106,11 +180,14 @@ class LocalDBEmulator {
 
         var inv = Storage.get('smartdine_inventory', []);
         orderData.items.forEach(function(cItem) {
-            var invItem = inv.find(function(i) { return i.id === cItem.id; });
+            var menuId = getOrderItemMenuId(cItem);
+            var invItem = inv.find(function(i) { return String(i.id) === String(menuId); });
             if (invItem) {
-                invItem.usedStock += cItem.quantity;
-                invItem.availableStock -= cItem.quantity;
-                if (invItem.availableStock < 0) invItem.availableStock = 0;
+                var available = readInventoryNumber(invItem, 'available_stock', 'availableStock');
+                var used = readInventoryNumber(invItem, 'used_stock', 'usedStock');
+                var quantity = getOrderItemQuantity(cItem);
+                invItem.availableStock = Math.max(0, available - quantity);
+                invItem.usedStock = used + quantity;
             }
         });
         Storage.set('smartdine_inventory', inv);
@@ -130,6 +207,24 @@ class LocalDBEmulator {
             return { data: { success: true }, error: null };
         }
         return { data: null, error: 'Order not found' };
+    }
+
+    static async deleteOrder(orderId) {
+        await this.delay(250);
+        var orders = Storage.get('smartdine_orders', []);
+        var idx = orders.findIndex(function(o) {
+            return String(o.id) === String(orderId);
+        });
+        if (idx < 0) return { data: null, error: 'Order not found' };
+
+        var status = String(orders[idx].status || '').toLowerCase();
+        if (status !== 'served' && status !== 'cancelled') {
+            return { data: null, error: 'Only served or cancelled orders can be deleted from history' };
+        }
+
+        orders.splice(idx, 1);
+        Storage.set('smartdine_orders', orders);
+        return { data: { success: true }, error: null };
     }
 
     static async deleteUserData(email, role) {
@@ -247,11 +342,11 @@ class SupabaseManager {
 
     static async getMenu() {
         var res = await this.request('menu_items', { query: 'select=*&order=id.asc' });
-        if (res.error || !res.data || res.data.length === 0) {
-            console.warn('[Supabase] Falling back to local menu:', res.error || 'No rows returned');
-            return LocalDBEmulator.getMenu();
-        }
         return res;
+    }
+
+    static async getWaiters() {
+        return this.request('waiters', { query: 'select=*&order=id.asc' });
     }
 
     static async cleanupExpiredUserData(force) {
@@ -523,20 +618,71 @@ class SupabaseManager {
 
     static async getInventory() {
         var res = await this.request('inventory', { query: 'select=*&order=id.asc' });
-        if (res.error || !res.data || res.data.length === 0) {
-            console.warn('[Supabase] Falling back to local inventory:', res.error || 'No rows returned');
-            return LocalDBEmulator.getInventory();
-        }
         return res;
+    }
+
+    static async createInventoryItem(item) {
+        return this.request('inventory', {
+            method: 'POST',
+            body: getInventoryPayload(item)
+        });
+    }
+
+    static async updateInventoryItem(itemId, item) {
+        return this.request('inventory', {
+            method: 'PATCH',
+            query: 'id=eq.' + encodeURIComponent(itemId),
+            body: getInventoryPayload(item)
+        });
+    }
+
+    static async deleteInventoryItem(itemId) {
+        return this.request('inventory', {
+            method: 'DELETE',
+            query: 'id=eq.' + encodeURIComponent(itemId)
+        });
     }
 
     static async getOrders() {
         var res = await this.request('orders', { query: 'select=*,order_items(*)&order=created_at.asc' });
-        if (res.error) {
-            console.warn('[Supabase] Falling back to local orders:', res.error);
-            return LocalDBEmulator.getOrders();
-        }
         return res;
+    }
+
+    static async updateInventoryForOrderItems(items) {
+        items = items || [];
+        var quantities = {};
+        items.forEach(function(item) {
+            var id = getOrderItemMenuId(item);
+            if (id === null) return;
+            quantities[id] = (quantities[id] || 0) + getOrderItemQuantity(item);
+        });
+
+        var ids = Object.keys(quantities);
+        if (ids.length === 0) return { data: { success: true }, error: null };
+
+        var invRes = await this.request('inventory', {
+            query: 'id=in.(' + ids.join(',') + ')&select=*'
+        });
+        if (invRes.error) return invRes;
+
+        var inventory = invRes.data || [];
+        for (var i = 0; i < inventory.length; i++) {
+            var row = inventory[i];
+            var usedQty = quantities[row.id] || 0;
+            var available = readInventoryNumber(row, 'available_stock', 'availableStock');
+            var used = readInventoryNumber(row, 'used_stock', 'usedStock');
+            var updateRes = await this.request('inventory', {
+                method: 'PATCH',
+                query: 'id=eq.' + encodeURIComponent(row.id),
+                body: {
+                    availableStock: Math.max(0, available - usedQty),
+                    usedStock: used + usedQty
+                }
+            });
+            if (updateRes.error) return updateRes;
+        }
+
+        return { data: { success: true }, error: null };
     }
 
     static async placeOrder(orderData) {
@@ -580,6 +726,9 @@ class SupabaseManager {
         });
         
         if (itemsRes.error) return itemsRes;
+
+        var inventoryRes = await this.updateInventoryForOrderItems(orderData.items);
+        if (inventoryRes.error) return inventoryRes;
         
         return { data: { success: true }, error: null };
     }
@@ -587,8 +736,15 @@ class SupabaseManager {
     static async updateOrderStatus(orderId, status) {
         return this.request('orders', {
             method: 'PATCH',
-            query: 'id=eq.' + orderId,
+            query: 'id=eq.' + encodeURIComponent(orderId),
             body: { status: status }
+        });
+    }
+
+    static async deleteOrder(orderId) {
+        return this.request('orders', {
+            method: 'DELETE',
+            query: 'id=eq.' + encodeURIComponent(orderId) + '&status=in.(served,cancelled)'
         });
     }
 }
@@ -609,10 +765,15 @@ class SmartDineAPI {
     static async saveCart(email, cart) { return this.client.saveCart ? this.client.saveCart(email, cart) : { data: { success: true }, error: null }; }
     static async savePreferences(email, preferences) { return this.client.savePreferences ? this.client.savePreferences(email, preferences) : { data: { success: true }, error: null }; }
     static async getMenu() { return this.client.getMenu(); }
+    static async getWaiters() { return this.client.getWaiters ? this.client.getWaiters() : { data: [], error: null }; }
     static async getInventory() { return this.client.getInventory(); }
+    static async createInventoryItem(data) { return this.client.createInventoryItem(data); }
+    static async updateInventoryItem(id, data) { return this.client.updateInventoryItem(id, data); }
+    static async deleteInventoryItem(id) { return this.client.deleteInventoryItem(id); }
     static async getOrders() { return this.client.getOrders(); }
     static async placeOrder(data) { return this.client.placeOrder(data); }
     static async updateOrderStatus(id, status) { return this.client.updateOrderStatus(id, status); }
+    static async deleteOrder(id) { return this.client.deleteOrder(id); }
     static async cleanupExpiredUserData(force) { return this.client.cleanupExpiredUserData ? this.client.cleanupExpiredUserData(force) : { data: { success: true }, error: null }; }
 }
 
