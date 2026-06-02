@@ -1,4 +1,4 @@
-var CACHE_NAME = 'smartdine-v48';
+var CACHE_NAME = 'smartdine-v49';
 var URLS_TO_CACHE = [
   '/',
   '/index.html',

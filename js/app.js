@@ -187,6 +187,10 @@ document.addEventListener('click', function (e) {
         sendAIMessage();
         break;
 
+      case 'clear-ai-chat':
+        clearAIChat();
+        break;
+
       // Mobile Menu
       case 'toggle-mobile-menu':
         toggleMobileMenu();

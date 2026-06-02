@@ -47,23 +47,43 @@ function renderAIChatPanel() {
                 '<h3>SmartDine AI</h3>' +
                 '<span>Menu, macros, budget and taste helper</span>' +
             '</div>' +
-            '<button class="btn-icon ai-close-btn" data-action="toggle-ai-chat" aria-label="Close">x</button>' +
-        '</div>' +
-        '<div class="ai-chip-row">' + chips + '</div>' +
-        '<div class="chat-messages" id="chat-messages">' +
-            '<div class="chat-message bot">' +
-                '<div class="chat-avatar">AI</div>' +
-                '<div class="chat-bubble">' +
-                    '<strong>Tell me what you want to eat.</strong><br>' +
-                    'Ask things like high protein, high carbs, healthy, spicy veg, biryani under 400, dessert, drinks, or compare two dishes.' +
-                '</div>' +
+            '<div class="ai-header-actions">' +
+                '<button type="button" class="btn-icon ai-clear-btn" data-action="clear-ai-chat" aria-label="Clear chat">Clear</button>' +
+                '<button type="button" class="btn-icon ai-close-btn" data-action="toggle-ai-chat" aria-label="Close">x</button>' +
             '</div>' +
         '</div>' +
+        '<div class="ai-chip-row">' + chips + '</div>' +
+        '<div class="chat-messages" id="chat-messages">' + getAIIntroMessage() + '</div>' +
         '<div class="chat-input-area">' +
             '<input type="text" id="ai-input" class="form-input" placeholder="Ask about menu, protein, carbs, budget..." autocomplete="off">' +
             '<button class="btn btn-primary ai-send-btn" data-action="send-ai-message">Send</button>' +
         '</div>'
     );
+}
+
+function getAIIntroMessage() {
+    return (
+        '<div class="chat-message bot">' +
+            '<div class="chat-avatar">AI</div>' +
+            '<div class="chat-bubble">' +
+                '<strong>Tell me what you want to eat.</strong><br>' +
+                'Say hi, i, i also, recommend something, high protein, high carbs, healthy, spicy veg, biryani under 400, dessert, drinks, or compare two dishes.' +
+            '</div>' +
+        '</div>'
+    );
+}
+
+function clearAIChat() {
+    var messages = document.getElementById('chat-messages');
+    var input = document.getElementById('ai-input');
+    if (messages) {
+        messages.innerHTML = getAIIntroMessage();
+        messages.scrollTop = 0;
+    }
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
 }
 
 function askAI(prompt) {
@@ -122,11 +142,12 @@ function buildAIAnswer(prompt) {
     var query = parseAIQuery(prompt);
     var menu = getAIMenuItems();
 
-    if (query.greeting) {
+    if ((query.greeting || query.recommendationStarter) && !hasAIRecommendationCriteria(query)) {
         return {
-            title: 'Hi, I can help with the menu.',
-            summary: 'Ask me for high protein, high carb, healthy, spicy, veg, non-veg, budget, drinks, desserts, or a specific dish name.',
-            items: getTopItems(menu, 3)
+            title: 'Here are a few dishes to start with.',
+            summary: 'I picked popular options from the current menu. Tell me veg, non-veg, spicy, healthy, budget, protein, carbs, dessert, or drinks and I will narrow it down.',
+            items: getTopItems(menu, 4),
+            note: 'You can ask a follow-up like "spicy veg under 300" or "high protein non-veg".'
         };
     }
 
@@ -198,6 +219,7 @@ function getAIMenuItems() {
 
 function parseAIQuery(prompt) {
     var text = String(prompt || '').toLowerCase();
+    var normalizedText = text.replace(/\s+/g, ' ').trim();
     var budget = null;
     var budgetMatch = text.match(/(?:under|below|less than|within|max|maximum|upto|up to)\s*(?:rs\.?|inr|₹)?\s*(\d{2,4})/);
     if (!budgetMatch) budgetMatch = text.match(/(?:rs\.?|inr|₹)\s*(\d{2,4})/);
@@ -230,7 +252,8 @@ function parseAIQuery(prompt) {
 
     return {
         text: text,
-        greeting: /\b(hi|hello|hey)\b/.test(text),
+        greeting: /\b(hi|hii|hello|hey)\b/.test(text),
+        recommendationStarter: /^(i|i also|also|suggest|suggest me|recommend|recommend me|what should i eat|help me choose|hungry|i am hungry|start)$/i.test(normalizedText) || /\b(suggest|recommend)\b/.test(text),
         thanks: /thank|thanks/.test(text),
         menuOverview: /what.*menu|show.*menu|full menu|categories|what do you have/.test(text),
         compare: /compare| vs | versus |difference/.test(text),
@@ -250,6 +273,28 @@ function parseAIQuery(prompt) {
         category: category,
         ingredient: detectIngredient(text)
     };
+}
+
+function hasAIRecommendationCriteria(query) {
+    return !!(
+        query.menuOverview ||
+        query.compare ||
+        query.itemSpecific ||
+        query.veg ||
+        query.nonVeg ||
+        query.highProtein ||
+        query.highCarb ||
+        query.lowCarb ||
+        query.healthy ||
+        query.spicy ||
+        query.mild ||
+        query.sweet ||
+        query.drink ||
+        query.quick ||
+        query.budget ||
+        query.category ||
+        query.ingredient
+    );
 }
 
 function detectIngredient(text) {
@@ -487,3 +532,4 @@ function escapeRegExp(string) {
 }
 
 window.askAI = askAI;
+window.clearAIChat = clearAIChat;

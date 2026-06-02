@@ -2099,7 +2099,7 @@ body[data-theme='dark'] .btn-ghost {
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
-  z-index: 95;
+  z-index: 940;
   transform: scale(0.9) translateY(20px);
   opacity: 0;
   pointer-events: none;
@@ -2232,6 +2232,32 @@ body[data-theme='dark'] .btn-ghost {
 
 .ai-close-btn {
   flex: 0 0 auto;
+}
+
+.ai-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ai-clear-btn {
+  width: auto;
+  min-width: 58px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.ai-close-btn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
 }
 
 .ai-chip-row {
@@ -2423,7 +2449,8 @@ body[data-theme='dark'] .btn-ghost {
   }
   .ai-float-btn {
     right: 16px;
-    bottom: 18px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    z-index: 930;
   }
   .ai-reco-card {
     grid-template-columns: 1fr;
