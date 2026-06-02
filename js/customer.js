@@ -221,7 +221,11 @@ async function renderMenu() {
   }
   
   var menu = window.APP_MENU;
-  var tableNum = Storage.get('smartdine_table', 1);
+  var storedTableNum = Storage.get('smartdine_table', null);
+  var tableNum = storedTableNum || 1;
+  if (!storedTableNum) {
+    Storage.set('smartdine_table', tableNum);
+  }
 
   // Reset filters on page load
   menuFilters = { category: 'All', dietary: null, spicy: false, budget: false, bestseller: false, search: '' };

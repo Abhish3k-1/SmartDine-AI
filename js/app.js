@@ -87,8 +87,10 @@ function syncWaitersFromDB() {
 
 function showVisitGreeting() {
   try {
-    if (sessionStorage.getItem('smartdine_visit_greeted') === 'true') return;
-    sessionStorage.setItem('smartdine_visit_greeted', 'true');
+    if (typeof sessionStorage !== 'undefined') {
+      if (sessionStorage.getItem('smartdine_visit_greeted') === 'true') return;
+      sessionStorage.setItem('smartdine_visit_greeted', 'true');
+    }
   } catch (err) {
     console.warn('[SmartDine AI] Greeting session check skipped:', err);
   }

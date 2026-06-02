@@ -278,12 +278,19 @@ async function placeOrder() {
 
     var cart = Storage.get('smartdine_cart', []);
     var tableNum = Storage.get('smartdine_table', null);
+    var tableSelect = document.getElementById('cart-table-select');
+    var selectedTable = tableSelect ? parseInt(tableSelect.value, 10) : null;
+    if (!tableNum && selectedTable) {
+        tableNum = selectedTable;
+        Storage.set('smartdine_table', tableNum);
+        if (typeof saveCurrentPreferences === 'function') saveCurrentPreferences();
+    }
     var guestCount = Storage.get('smartdine_guest_count', 2);
 
     if (cart.length === 0) return;
     if (!tableNum) {
         var warning = document.getElementById('cart-table-warning');
-        var select = document.getElementById('cart-table-select');
+        var select = tableSelect;
         if (warning) {
             warning.innerHTML = '<span>!</span><p>Choose your table here before placing the order.</p>';
             warning.style.display = 'block';
@@ -298,6 +305,7 @@ async function placeOrder() {
     }
 
     var btn = document.getElementById('btn-place-order');
+    if (btn && btn.disabled) return;
     if (btn) {
         btn.innerHTML = 'Placing Order...';
         btn.disabled = true;
@@ -319,7 +327,12 @@ async function placeOrder() {
         waiter: waiter || null
     };
 
-    var res = await SmartDineAPI.placeOrder(orderData);
+    var res;
+    try {
+        res = await SmartDineAPI.placeOrder(orderData);
+    } catch (err) {
+        res = { data: null, error: err && err.message ? err.message : 'Unexpected order error' };
+    }
     if (res.error) {
         showToast('Error', 'Failed to place order: ' + res.error, 'error');
         if (btn) {

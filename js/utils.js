@@ -188,6 +188,38 @@ function showToast(title, message, type) {
  * Escape-key handler reference so we can clean it up on close.
  * @private
  */
+var _modalScrollY = 0;
+var _modalScrollLocked = false;
+
+function _lockPageScrollForModal() {
+  if (_modalScrollLocked) return;
+
+  _modalScrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  document.documentElement.classList.add('modal-scroll-locked');
+  document.body.classList.add('modal-scroll-locked');
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + _modalScrollY + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+  _modalScrollLocked = true;
+}
+
+function _unlockPageScrollForModal() {
+  if (!_modalScrollLocked) return;
+
+  document.documentElement.classList.remove('modal-scroll-locked');
+  document.body.classList.remove('modal-scroll-locked');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _modalScrollY || 0);
+  _modalScrollY = 0;
+  _modalScrollLocked = false;
+}
+
 function _handleModalEscape(e) {
   if (e.key === 'Escape') closeModal();
 }
@@ -222,6 +254,7 @@ function showModal(title, bodyHTML, footerHTML) {
       (footerHTML ? '<div class="modal-footer">' + footerHTML + '</div>' : '') +
     '</div>';
 
+  _lockPageScrollForModal();
   document.body.appendChild(overlay);
 
   // Close when clicking the backdrop (not the modal itself)
@@ -263,6 +296,7 @@ function closeModal() {
       if (overlay.parentElement) overlay.remove();
     }, 250);
   }
+  _unlockPageScrollForModal();
   document.removeEventListener('keydown', _handleModalEscape);
 }
 
