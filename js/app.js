@@ -44,6 +44,8 @@ async function init() {
   // 5.5. Handle current route
   handleRoute();
 
+  showVisitGreeting();
+
   // 6. Register service worker for PWA
   registerServiceWorker();
 
@@ -81,6 +83,66 @@ function syncWaitersFromDB() {
   }).catch(function(err) {
     console.warn('[SmartDine AI] Waiter roster sync skipped:', err);
   });
+}
+
+function showVisitGreeting() {
+  try {
+    if (sessionStorage.getItem('smartdine_visit_greeted') === 'true') return;
+    sessionStorage.setItem('smartdine_visit_greeted', 'true');
+  } catch (err) {
+    console.warn('[SmartDine AI] Greeting session check skipped:', err);
+  }
+
+  var visits = Storage.get('smartdine_visit_count', 0) || 0;
+  visits += 1;
+  Storage.set('smartdine_visit_count', visits);
+  Storage.set('smartdine_last_visit_at', new Date().toISOString());
+
+  var user = Auth.getUser();
+  var greeting = getVisitGreeting(user, visits);
+
+  setTimeout(function() {
+    showToast(greeting.title, greeting.message, greeting.type);
+  }, 650);
+}
+
+function getVisitGreeting(user, visits) {
+  var timeGreeting = getTimeBasedGreeting();
+  if (user && user.email) {
+    var displayName = user.name || user.email.split('@')[0] || 'there';
+    return {
+      title: timeGreeting + ', ' + displayName,
+      message: 'Your table menu and SmartDine AI are ready.',
+      type: 'success'
+    };
+  }
+
+  if (visits <= 1) {
+    return {
+      title: 'Welcome to SmartDine AI',
+      message: 'Explore dishes, pick your table, and ask the AI for food suggestions.',
+      type: 'info'
+    };
+  }
+
+  var messages = [
+    'Ready for another order? The menu and AI assistant are waiting.',
+    'Welcome back. Browse favorites or ask for a quick recommendation.',
+    'Good to see you again. Start with the menu or let SmartDine AI suggest a dish.'
+  ];
+
+  return {
+    title: timeGreeting,
+    message: messages[visits % messages.length],
+    type: 'info'
+  };
+}
+
+function getTimeBasedGreeting() {
+  var hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 // ============================================================
